@@ -1,0 +1,22 @@
+{"level":"info","message":"Running in demo mode - using mock database","service":"contentharvest-ai","timestamp":"2025-09-26T08:53:37.928Z"}
+{"level":"info","message":"Database connected successfully","service":"contentharvest-ai","timestamp":"2025-09-26T08:53:37.930Z"}
+{"level":"info","message":"Scraping scheduler initialized","service":"contentharvest-ai","timestamp":"2025-09-26T08:53:37.963Z"}
+{"level":"info","message":"Scraping scheduler initialized","service":"contentharvest-ai","timestamp":"2025-09-26T08:53:37.963Z"}
+{"level":"info","message":"WebSocket handlers configured","service":"contentharvest-ai","timestamp":"2025-09-26T08:53:37.963Z"}
+{"level":"info","message":"ContentHarvest AI Backend running on port 5000","service":"contentharvest-ai","timestamp":"2025-09-26T08:53:37.964Z"}
+{"level":"info","message":"Environment: development","service":"contentharvest-ai","timestamp":"2025-09-26T08:53:37.964Z"}
+{"level":"info","message":"SIGTERM received, shutting down gracefully","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:07.819Z"}
+{"level":"info","message":"Process terminated","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:07.819Z"}
+{"level":"info","message":"Running in demo mode - using mock database","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:47.801Z"}
+{"level":"info","message":"Database connected successfully","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:47.804Z"}
+{"level":"info","message":"Scraping scheduler initialized","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:47.818Z"}
+{"level":"info","message":"Scraping scheduler initialized","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:47.818Z"}
+{"level":"info","message":"WebSocket handlers configured","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:47.819Z"}
+{"level":"info","message":"ContentHarvest AI Backend running on port 5000","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:47.819Z"}
+{"level":"info","message":"Environment: development","service":"contentharvest-ai","timestamp":"2025-09-26T08:56:47.819Z"}
+{"level":"info","message":"SIGTERM received, shutting down gracefully","service":"contentharvest-ai","timestamp":"2025-09-26T09:20:55.126Z"}
+{"level":"info","message":"Process terminated","service":"contentharvest-ai","timestamp":"2025-09-26T09:20:55.130Z"}
+{"level":"info","message":"SIGTERM received, shutting down gracefully","service":"contentharvest-ai","timestamp":"2025-09-26T09:21:09.520Z"}
+{"level":"info","message":"Process terminated","service":"contentharvest-ai","timestamp":"2025-09-26T09:21:09.529Z"}
+{"level":"info","message":"SIGTERM received, shutting down gracefully","service":"contentharvest-ai","timestamp":"2025-09-26T09:21:09.526Z"}
+{"level":"info","message":"Process terminated","service":"contentharvest-ai","timestamp":"2025-09-26T09:21:09.537Z"}

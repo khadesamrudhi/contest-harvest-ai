@@ -1,27 +1,167 @@
-// src/scrapers/competitors/WebsiteScraper.js
+const BaseScraper = require('../base/BaseScraper');
+const logger = require('../../utils/logger');
 
-const axios = require('axios');
-const cheerio = require('cheerio');
+class WebsiteScraper extends BaseScraper {
+  constructor(options = {}) {
+    super(options);
+  }
 
-/**
- * Scrapes the main content and links from a competitor website.
- * @param {string} url - The website URL to scrape.
- * @returns {Promise<Object>} Main text content and all links.
- */
-async function scrapeWebsite(url) {
-  try {
-    const { data: html } = await axios.get(url, { timeout: 10000 });
-    const $ = cheerio.load(html);
-    const text = $('body').text().replace(/\s+/g, ' ').trim();
-    const links = [];
-    $('a[href]').each((_, el) => {
+  async scrapeWebsite(url) {
+    try {
+      logger.info(`Starting website scrape for: ${url}`);
+      
+      const $ = await this.scrapeWithPuppeteer(url);
+      
+      const result = {
+        url,
+        metadata: this.extractMetadata($),
+        content: this.extractMainContent($),
+        links: this.extractLinks($, url),
+        images: this.extractImages($, url),
+        headings: this.extractHeadings($),
+        socialLinks: this.extractSocialLinks($),
+        contactInfo: this.extractContactInfo($),
+        technologies: await this.detectTechnologies($),
+        scrapedAt: new Date().toISOString()
+      };
+
+      logger.info(`Website scrape completed for: ${url}`);
+      return result;
+
+    } catch (error) {
+      logger.error(`Website scraping failed for ${url}:`, error);
+      throw error;
+    }
+  }
+
+  extractMainContent($) {
+    const contentSelectors = [
+      'main',
+      '[role="main"]',
+      '.main-content',
+      '#main-content',
+      '.content',
+      '#content',
+      'article',
+      '.post-content',
+      '.entry-content'
+    ];
+
+    let content = '';
+    for (const selector of contentSelectors) {
+      const text = $(selector).text().trim();
+      if (text.length > content.length) {
+        content = text;
+      }
+    }
+
+    if (!content) {
+      content = $('body').text().trim();
+    }
+
+    return this.sanitizeText(content);
+  }
+
+  extractHeadings($) {
+    const headings = [];
+    for (let i = 1; i <= 6; i++) {
+      $(`h${i}`).each((index, el) => {
+        const text = $(el).text().trim();
+        if (text) {
+          headings.push({
+            level: i,
+            text,
+            id: $(el).attr('id') || ''
+          });
+        }
+      });
+    }
+    return headings;
+  }
+
+  extractSocialLinks($) {
+    const socialPlatforms = [
+      'facebook.com', 'twitter.com', 'linkedin.com', 'instagram.com',
+      'youtube.com', 'tiktok.com', 'pinterest.com', 'github.com'
+    ];
+
+    const socialLinks = {};
+    
+    $('a[href]').each((i, el) => {
       const href = $(el).attr('href');
-      if (href && !href.startsWith('#')) links.push(href);
+      if (href) {
+        for (const platform of socialPlatforms) {
+          if (href.includes(platform)) {
+            const platformName = platform.split('.')[0];
+            socialLinks[platformName] = href;
+          }
+        }
+      }
     });
-    return { text, links };
-  } catch (error) {
-    return { error: error.message || 'Failed to scrape website' };
+
+    return socialLinks;
+  }
+
+  extractContactInfo($) {
+    const contactInfo = {};
+
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const bodyText = $('body').text();
+    const emails = bodyText.match(emailRegex) || [];
+    if (emails.length > 0) {
+      contactInfo.emails = [...new Set(emails)];
+    }
+
+    const phoneRegex = /(\+?1?[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/g;
+    const phones = bodyText.match(phoneRegex) || [];
+    if (phones.length > 0) {
+      contactInfo.phones = [...new Set(phones)];
+    }
+
+    const addressSelectors = [
+      '[itemprop="address"]',
+      '.address',
+      '#address',
+      '.contact-address'
+    ];
+
+    for (const selector of addressSelectors) {
+      const address = $(selector).text().trim();
+      if (address) {
+        contactInfo.address = address;
+        break;
+      }
+    }
+
+    return contactInfo;
+  }
+
+  async detectTechnologies($) {
+    const technologies = [];
+
+    const techIndicators = {
+      'React': () => $('script').text().includes('React') || $('[data-reactroot]').length > 0,
+      'Vue.js': () => $('script').text().includes('Vue') || $('[data-v-]').length > 0,
+      'Angular': () => $('script').text().includes('ng-') || $('[ng-]').length > 0,
+      'jQuery': () => $('script').text().includes('jquery'),
+      'Bootstrap': () => $('link[href*="bootstrap"]').length > 0 || $('.container, .row, .col-').length > 0,
+      'WordPress': () => $('meta[name="generator"][content*="WordPress"]').length > 0,
+      'Shopify': () => $('script').text().includes('Shopify') || $('.shopify').length > 0,
+      'Google Analytics': () => $('script').text().includes('gtag') || $('script').text().includes('ga(')
+    };
+
+    for (const [tech, detector] of Object.entries(techIndicators)) {
+      try {
+        if (detector()) {
+          technologies.push(tech);
+        }
+      } catch (error) {
+        // Ignore detection errors
+      }
+    }
+
+    return technologies;
   }
 }
 
-module.exports = { scrapeWebsite };
+module.exports = WebsiteScraper;
