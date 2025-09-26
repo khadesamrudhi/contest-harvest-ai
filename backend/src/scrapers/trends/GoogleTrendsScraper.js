@@ -1,65 +1,77 @@
-// GoogleTrendsScraper.js
-// Scrapes trending search topics using google-trends-api
-
 const googleTrends = require('google-trends-api');
+const logger = require('../../utils/logger');
 
-/**
- * Fetches daily trending searches for a given country.
- * @param {string} [geo='US'] - Country code (e.g., 'US', 'IN', 'GB').
- * @returns {Promise<Array>} Array of trending search topics.
- */
-async function getDailyTrends(geo = 'US') {
-  try {
-    const results = await googleTrends.dailyTrends({ geo });
-    const data = JSON.parse(results);
-    return data.default.trendingSearchesDays[0].trendingSearches.map(item => ({
-      title: item.title.query,
-      articles: item.articles,
-      formattedTraffic: item.formattedTraffic,
-      relatedQueries: item.relatedQueries,
-    }));
-  } catch (error) {
-    return { error: error.message || 'Failed to fetch daily trends' };
+class GoogleTrendsScraper {
+  constructor() {
+    this.defaultOptions = {
+      geo: 'US',
+      hl: 'en-US',
+      category: 0,
+      granularTimeUnit: 'day'
+    };
+  }
+
+  async getTrendData(keyword, options = {}) {
+    try {
+      const searchOptions = { ...this.defaultOptions, ...options };
+      
+      const results = await googleTrends.interestOverTime({
+        keyword,
+        startTime: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        endTime: new Date(),
+        ...searchOptions
+      });
+
+      const data = JSON.parse(results);
+      
+      return {
+        keyword,
+        timelineData: data.default.timelineData,
+        averageValue: this.calculateAverage(data.default.timelineData),
+        trend: this.calculateTrend(data.default.timelineData)
+      };
+    } catch (error) {
+      logger.error('Google Trends scraping failed:', error);
+      throw error;
+    }
+  }
+
+  async getRelatedQueries(keyword, options = {}) {
+    try {
+      const results = await googleTrends.relatedQueries({
+        keyword,
+        startTime: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        endTime: new Date(),
+        ...this.defaultOptions,
+        ...options
+      });
+
+      return JSON.parse(results);
+    } catch (error) {
+      logger.error('Related queries fetch failed:', error);
+      throw error;
+    }
+  }
+
+  calculateAverage(timelineData) {
+    if (!timelineData || timelineData.length === 0) return 0;
+    
+    const sum = timelineData.reduce((acc, item) => acc + (item.value?.[0] || 0), 0);
+    return Math.round(sum / timelineData.length);
+  }
+
+  calculateTrend(timelineData) {
+    if (!timelineData || timelineData.length < 2) return 0;
+    
+    const recent = timelineData.slice(-7); // Last 7 days
+    const previous = timelineData.slice(-14, -7); // Previous 7 days
+    
+    const recentAvg = this.calculateAverage(recent);
+    const previousAvg = this.calculateAverage(previous);
+    
+    if (previousAvg === 0) return 0;
+    return Math.round(((recentAvg - previousAvg) / previousAvg) * 100);
   }
 }
 
-/**
- * Fetches real-time trending searches for a given country and category.
- * @param {string} [geo='US'] - Country code.
- * @param {string} [category='all'] - Category (e.g., 'all', 'b', 'e', 'm', 's', 't').
- * @returns {Promise<Array>} Array of real-time trending topics.
- */
-async function getRealtimeTrends(geo = 'US', category = 'all') {
-  try {
-    const results = await googleTrends.realtimeTrends({ geo, category });
-    const data = JSON.parse(results);
-    return data.storySummaries.trendingStories.map(item => ({
-      title: item.title,
-      entityNames: item.entityNames,
-      articles: item.articles,
-    }));
-  } catch (error) {
-    return { error: error.message || 'Failed to fetch realtime trends' };
-  }
-}
-
-/**
- * Fetches interest over time for a keyword.
- * @param {string} keyword - The keyword to search.
- * @param {string} [geo='US'] - Country code.
- * @returns {Promise<Object>} Interest over time data.
- */
-async function getInterestOverTime(keyword, geo = 'US') {
-  try {
-    const results = await googleTrends.interestOverTime({ keyword, geo });
-    return JSON.parse(results);
-  } catch (error) {
-    return { error: error.message || 'Failed to fetch interest over time' };
-  }
-}
-
-module.exports = {
-  getDailyTrends,
-  getRealtimeTrends,
-  getInterestOverTime,
-};
+module.exports = GoogleTrendsScraper;

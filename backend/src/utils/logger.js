@@ -1,4 +1,3 @@
-
 const winston = require('winston');
 
 const logger = winston.createLogger({
@@ -10,13 +9,11 @@ const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'contentharvest-ai' },
   transports: [
-    // Write to all logs with level `info` and below to `combined.log`
     new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
-  ],
+    new winston.transports.File({ filename: 'logs/combined.log' })
+  ]
 });
 
-// If we're not in production, also log to the console
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(

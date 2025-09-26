@@ -8,9 +8,15 @@
     "backend"
   ],
   "scripts": {
-    "start": "echo No root start script",
-    "install-all": "npm --workspaces install"
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "install-all": "npm --workspaces install",
+    "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\""
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
 }
